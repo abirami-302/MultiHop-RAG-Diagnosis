@@ -366,7 +366,7 @@
             <td class="text-right">30.80%</td>
             <td class="text-right font-bold">39.80%</td>
             <td class="text-right text-emerald-700 font-bold">+9.00 pp</td>
-            <td class="text-center"><span class="badge-sig">Yes (p &lt; 0.001)</span></td>
+            <td class="text-center"><span class="badge-ns">Not tested in paired m=6</span></td>
           </tr>
           <tr>
             <td class="font-sans font-medium text-slate-800">S8 vs. S2 (Dense BGE-Small)</td>
@@ -376,7 +376,7 @@
             <td class="text-right">36.80%</td>
             <td class="text-right font-bold">39.80%</td>
             <td class="text-right text-slate-700">+3.00 pp</td>
-            <td class="text-center"><span class="badge-ns">No (p = 0.773)</span></td>
+            <td class="text-center"><span class="badge-ns">No (p = 0.516)</span></td>
           </tr>
           <tr class="bg-purple-50/40">
             <td class="font-sans font-medium text-slate-800">S8 vs. S3 (Hybrid RRF)</td>
@@ -386,7 +386,7 @@
             <td class="text-right">33.60%</td>
             <td class="text-right font-bold">39.80%</td>
             <td class="text-right text-purple-700 font-bold">+6.20 pp</td>
-            <td class="text-center"><span class="badge-sig">Yes (p = 0.008)</span></td>
+            <td class="text-center"><span class="badge-sig">Yes (p = 0.0059)</span></td>
           </tr>
           <tr>
             <td class="font-sans font-medium text-slate-800">S8 vs. S5 (Hybrid + Reranker)</td>
@@ -396,7 +396,7 @@
             <td class="text-right">38.80%</td>
             <td class="text-right font-bold">39.80%</td>
             <td class="text-right text-slate-700">+1.00 pp</td>
-            <td class="text-center"><span class="badge-ns">No (p = 1.000)</span></td>
+            <td class="text-center"><span class="badge-ns">No (p = 0.851)</span></td>
           </tr>
           <tr>
             <td class="font-sans font-medium text-slate-800">S8 vs. S5_Ctrl_Pool50 (Fair Pool Ctrl)</td>
@@ -406,7 +406,7 @@
             <td class="text-right">38.80%</td>
             <td class="text-right font-bold">39.80%</td>
             <td class="text-right text-slate-700">+1.00 pp</td>
-            <td class="text-center"><span class="badge-ns">No (p = 1.000)</span></td>
+            <td class="text-center"><span class="badge-ns">No (p = 0.851)</span></td>
           </tr>
           <tr>
             <td class="font-sans font-medium text-slate-800">S8 vs. S7 (Iterative Dense)</td>
@@ -416,7 +416,7 @@
             <td class="text-right">37.60%</td>
             <td class="text-right font-bold">39.80%</td>
             <td class="text-right text-slate-700">+2.20 pp</td>
-            <td class="text-center"><span class="badge-ns">No (p = 1.000)</span></td>
+            <td class="text-center"><span class="badge-ns">No (p = 0.851)</span></td>
           </tr>
         </tbody>
       </table>
@@ -484,7 +484,7 @@
             <td class="text-right">49.31%</td>
             <td class="text-right text-amber-700 font-bold">-1.83 pp</td>
             <td class="text-right">38.80%</td>
-            <td class="font-sans text-xs text-slate-600">Hop-2 provides modest +2.8 pp AllSF gain (p = 0.004)</td>
+            <td class="font-sans text-xs text-slate-600">Hop-2 provides modest +2.8 pp AllSF gain (p_holm = 0.048, borderline)</td>
           </tr>
           <tr>
             <td class="font-sans font-medium text-slate-800">Abl_BM25_Only</td>
@@ -505,16 +505,6 @@
             <td class="text-right text-emerald-700">+0.24 pp</td>
             <td class="text-right font-bold">40.00%</td>
             <td class="font-sans text-xs text-slate-700"><strong>Dense alone matches S8 (p = 1.0)</strong>; BM25 adds nothing once reranked</td>
-          </tr>
-          <tr class="bg-amber-50/40">
-            <td class="font-sans font-medium text-slate-800">S10_LLM_Query</td>
-            <td class="font-sans text-xs text-amber-800">Substitution: LLM Query Reformulation</td>
-            <td class="text-right">82.60%</td>
-            <td class="text-right text-rose-700 font-bold">-3.00 pp</td>
-            <td class="text-right">49.15%</td>
-            <td class="text-right text-rose-700 font-bold">-1.98 pp</td>
-            <td class="text-right">38.80%</td>
-            <td class="font-sans text-xs text-slate-600">LLM query reformulation introduces semantic drift vs heuristic (p = 0.0003)</td>
           </tr>
         </tbody>
       </table>
@@ -593,17 +583,6 @@
             <td class="text-center"><span class="badge-sig">Yes</span></td>
           </tr>
           <tr>
-            <td class="font-sans font-medium text-slate-800">S8 vs S5_Ctrl_Pool50</td>
-            <td class="font-bold text-slate-600">ALL_SF</td>
-            <td class="text-right">85.60%</td>
-            <td class="text-right">82.80%</td>
-            <td class="text-right text-emerald-700 font-bold">+2.80</td>
-            <td class="text-center text-slate-600">[+1.00, +4.60]</td>
-            <td class="text-right">0.0020</td>
-            <td class="text-right font-bold text-emerald-700">0.0040</td>
-            <td class="text-center"><span class="badge-sig">Yes</span></td>
-          </tr>
-          <tr>
             <td class="font-sans font-medium text-slate-800">S8 vs S7_Iterative_Dense</td>
             <td class="font-bold text-slate-600">ALL_SF</td>
             <td class="text-right">85.60%</td>
@@ -635,6 +614,17 @@
             <td class="text-right">&lt; 0.0001</td>
             <td class="text-right font-bold text-emerald-700">0.0008</td>
             <td class="text-center"><span class="badge-sig">Yes</span></td>
+          </tr>
+          <tr>
+            <td class="font-sans font-medium text-slate-800">S8 vs S5_Ctrl_Pool50</td>
+            <td class="font-bold text-slate-600">ALL_SF</td>
+            <td class="text-right">85.60%</td>
+            <td class="text-right">82.80%</td>
+            <td class="text-right text-emerald-700 font-bold">+2.80</td>
+            <td class="text-center text-slate-600">[+0.40, +5.20]</td>
+            <td class="text-right">0.0240</td>
+            <td class="text-right font-bold text-emerald-700">0.0480</td>
+            <td class="text-center"><span class="badge-sig">Yes (Borderline)</span></td>
           </tr>
           <tr>
             <td class="font-sans font-medium text-slate-800">S8 vs Abl_Dense_Only</td>
@@ -789,24 +779,6 @@
             <td class="text-right text-slate-600">0.8511</td>
             <td class="text-center"><span class="badge-ns">No</span></td>
           </tr>
-          <tr>
-            <td class="font-sans font-medium text-slate-800">S8 vs S7_Iterative_Dense</td>
-            <td class="text-center font-bold text-blue-700">49</td>
-            <td class="text-center text-slate-500">38</td>
-            <td class="text-right">1.1494</td>
-            <td class="text-right">0.2837</td>
-            <td class="text-right text-slate-600">1.0000</td>
-            <td class="text-center"><span class="badge-ns">No</span></td>
-          </tr>
-          <tr>
-            <td class="font-sans font-medium text-slate-800">S8 vs Abl_No_Reranker</td>
-            <td class="text-center font-bold text-blue-700">49</td>
-            <td class="text-center text-slate-500">29</td>
-            <td class="text-right">4.6282</td>
-            <td class="text-right">0.0315</td>
-            <td class="text-right text-slate-600">0.1890</td>
-            <td class="text-center"><span class="badge-ns">No</span></td>
-          </tr>
         </tbody>
       </table>
     </div>
@@ -952,6 +924,42 @@
     </div>
     <div class="p-3 bg-slate-50 text-[11px] text-slate-600 border-t border-slate-100">
       <strong>Reranking Truncation Loss:</strong> While 470 questions (94.0%) have both facts in candidate pools (438 + 32), S8 top-5 contains both facts for only 428 questions (85.60%). Exactly 42 questions are lost during cross-encoder reranking and truncation.
+    </div>
+    <div class="p-4 border-t border-slate-200 bg-slate-50/70">
+      <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Paired 2×2 Contingency: S8 Staged vs. S5_Ctrl Pool-50 on AllSF@5</h3>
+      <table class="w-full text-center border-collapse text-xs font-mono">
+        <thead class="bg-slate-200 text-slate-700">
+          <tr>
+            <th class="text-left font-sans">Condition</th>
+            <th>S5_Ctrl Pool-50 Hit (1)</th>
+            <th>S5_Ctrl Pool-50 Miss (0)</th>
+            <th>Total S8 Status</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-200">
+          <tr>
+            <td class="text-left font-sans font-medium text-slate-800">S8 Pipeline Hit (1)</td>
+            <td class="text-slate-700 font-bold">402 (Both hit)</td>
+            <td class="text-emerald-700 font-bold bg-emerald-50">26 (S8 only)</td>
+            <td class="font-bold">428 (85.60%)</td>
+          </tr>
+          <tr>
+            <td class="text-left font-sans font-medium text-slate-800">S8 Pipeline Miss (0)</td>
+            <td class="text-amber-700 font-bold bg-amber-50">12 (Ctrl only)</td>
+            <td class="text-slate-500 font-medium">60 (Neither hit)</td>
+            <td>72 (14.40%)</td>
+          </tr>
+          <tr class="bg-slate-100 font-bold text-slate-800 border-t-2 border-slate-300">
+            <td class="text-left font-sans">Total S5_Ctrl Status</td>
+            <td>414 (82.80%)</td>
+            <td>86 (17.20%)</td>
+            <td>500 (100.0%)</td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="text-[11px] text-slate-600 mt-2 font-mono">
+        Net Hop-2 Gain = (S8 only) − (Ctrl only) = 26 − 12 = <strong>+14 questions (+2.80 pp)</strong> (95% CI: [+0.40, +5.20], p_holm = 0.048, borderline)
+      </p>
     </div>
   </div>
 

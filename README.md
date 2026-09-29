@@ -6,7 +6,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 > **Paper Headline:**  
-> *"On HotpotQA (N=500, 19,260-passage corpus), a cross-encoder reranker yields the single largest retrieval gain (+15.4 pp AllSF@5), while iterative Hop-2 adds a modest +2.8 pp that does not translate to significant EM gains. Even with gold passages, a 3B reader reaches only 53.0% EM; scaling the reader to 7B improves EM by +12.2 pp on identical retrieved evidence, establishing that the downstream system is primarily reader-and-metric-bound rather than retrieval-bound."*
+> *"On HotpotQA (N=500, 19,260-passage corpus), a cross-encoder reranker yields the single largest retrieval gain (+15.4 pp AllSF@5), while iterative Hop-2 adds a modest +2.8 pp that is borderline significant on retrieval and does not translate to significant EM gains. Even with gold passages, a 3B reader reaches only 53.0% EM; scaling the reader to 7B improves EM by +12.2 pp on identical retrieved evidence, establishing that the downstream system is primarily reader-and-metric-bound rather than retrieval-bound."*
 
 ---
 
@@ -51,7 +51,7 @@
 | **S8: Staged Multi-Hop Pipeline** | **5** | **85.60%** | **92.60%** | **0.97** | **39.80%** | **51.14%** |
 | **S9: Oracle Ceiling (Gold Evidence)** | **Gold** | **100.00%** | **100.00%** | **1.00** | **53.00%** | **66.80%** |
 
-*\*Note on Ctrl_SinglePass_K10 and the Retrieval-to-Answer Gap:* Unreranked hybrid at context budget K=10 achieves 38.60% EM, essentially matching reranked K=5 (38.80%), versus 33.60% for unreranked hybrid at K=5. This demonstrates that the reranker's large retrieval gain adds negligible downstream accuracy once the reader is exposed to a broader passage window (10 passages). Its MRR of 0.90 reflects unreranked candidate positioning vs 0.97 for cross-encoder reranked stages.
+*\*Note on Ctrl_SinglePass_K10 and Context Budget:* Unreranked hybrid at a context budget of K=10 achieves 38.60% EM, essentially matching reranked K=5 (38.80%), versus 33.60% for unreranked hybrid at K=5. This demonstrates that giving the reader twice the passage window (10 vs 5 passages) yields similar downstream gains to neural reranking. A reranked K=10 configuration was not evaluated. Its MRR of 0.90 reflects unreranked candidate positioning vs 0.97 for cross-encoder reranked stages.
 
 *Note on System IDs:* S4, S6, and S10 represent exploratory experimental variants (intermediate pool trials and LLM query reformulation substitution) evaluated in scratch trajectories and omitted from primary benchmark rows to maintain clean pipeline progression.
 
@@ -77,12 +77,12 @@
 | Ablation Variant | Component Removed | AllSF@5 (%) | Δ AllSF (pp) | F1 Score (%) | Δ F1 (pp) | EM (%) | Diagnostic Finding |
 | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :--- |
 | **S8 Staged Pipeline** | None (Full Pipeline) | **85.60%** | — | **51.14%** | — | **39.80%** | Full staged architecture reference |
-| **Abl_No_Reranker** | Minus Cross-Encoder Reranker | 63.00% | **-22.60 pp** | 45.82% | **-5.32 pp** | 35.80% | **Reranker is linchpin ($p < 0.001$)**; scores below single-pass hybrid (67.2%) |
-| **S5_Ctrl_Pool50** | Minus Hop 2 (Single-Pass) | 82.80% | **-2.80 pp** | 49.31% | **-1.83 pp** | 38.80% | Hop-2 adds modest +2.8 pp AllSF ($p = 0.004$) |
+| **Abl_No_Reranker** | Minus Cross-Encoder Reranker | 63.00% | **-22.60 pp** | 45.82% | **-5.32 pp** | 35.80% | **Reranker is linchpin ($p < 0.001$)**; drops below single-pass hybrid (67.2%) |
+| **S5_Ctrl_Pool50** | Minus Hop 2 (Single-Pass) | 82.80% | **-2.80 pp** | 49.31% | **-1.83 pp** | 38.80% | Hop-2 adds modest +2.8 pp AllSF ($p_{\text{holm}} = 0.048$, borderline) |
 | **Abl_BM25_Only** | Minus Dense (BM25 only) | 80.40% | **-5.20 pp** | 51.39% | **+0.25 pp** | 40.40% | Dense improves all-facts recall; no downstream benefit |
 | **Abl_Dense_Only** | Minus BM25 (Dense only) | 85.60% | **0.00 pp** | 51.38% | **+0.24 pp** | 40.00% | **Dense matches S8 ($p = 1.0$)**; BM25 redundant once reranked |
 
-> **Finding on Abl_No_Reranker:** Without a cross-encoder reranker, S8 drops to 63.00% AllSF@5, which is *below* unreranked single-pass hybrid S3 (67.20%). This demonstrates that snippet-augmented iterative queries inject substantial distractor noise that actively degrades retrieval recall unless filtered by neural reranking.
+> **Finding on Abl_No_Reranker:** Without a cross-encoder reranker, S8 drops to 63.00% AllSF@5, which is *below* unreranked single-pass hybrid S3 (67.20%). This observation is consistent with distractor noise introduced by snippet-augmented iterative queries when left unfiltered by neural reranking.
 
 ---
 
@@ -95,10 +95,10 @@
 | **S8 vs S2_Dense** | AllSF@5 | 85.60% | 70.60% | **+15.00%** | $[+11.20, +19.00]$ | < 0.0001 | **0.0008** | **Yes** |
 | **S8 vs S3_Hybrid** | AllSF@5 | 85.60% | 67.20% | **+18.40%** | $[+14.60, +22.20]$ | < 0.0001 | **0.0008** | **Yes** |
 | **S8 vs S5_Hybrid_Rerank** | AllSF@5 | 85.60% | 82.60% | **+3.00%** | $[+1.40, +4.80]$ | < 0.0001 | **0.0008** | **Yes** |
-| **S8 vs S5_Ctrl_Pool50** | AllSF@5 | 85.60% | 82.80% | **+2.80%** | $[+1.00, +4.60]$ | 0.0020 | **0.0040** | **Yes** |
 | **S8 vs S7_Iterative_Dense** | AllSF@5 | 85.60% | 72.80% | **+12.80%** | $[+8.60, +17.00]$ | < 0.0001 | **0.0008** | **Yes** |
 | **S8 vs Abl_No_Reranker** | AllSF@5 | 85.60% | 63.00% | **+22.60%** | $[+18.60, +26.80]$ | < 0.0001 | **0.0008** | **Yes** |
 | **S8 vs Abl_BM25_Only** | AllSF@5 | 85.60% | 80.40% | **+5.20%** | $[+3.00, +7.40]$ | < 0.0001 | **0.0008** | **Yes** |
+| **S8 vs S5_Ctrl_Pool50** | AllSF@5 | 85.60% | 82.80% | **+2.80%** | $[+0.40, +5.20]$ | 0.0240 | **0.0480** | **Yes (Borderline)** |
 | **S8 vs Abl_Dense_Only** | AllSF@5 | 85.60% | 85.60% | **0.00%** | $[-2.00, +2.00]$ | 1.0000 | **1.0000** | **No** |
 | **Family 2: Downstream Generation Overlap (F1, m=5 tests)** | | | | | | | | |
 | **S8 vs S3_Hybrid** | F1 | 51.14% | 43.88% | **+7.26%** | $[+3.82, +10.73]$ | < 0.0001 | **0.0005** | **Yes** |
@@ -150,7 +150,7 @@
 | **Hybrid RRF Fusion** | Bridge ($N=404$) | 61.14% | 76.73% | 84.65% | 88.12% | Underperforms Dense on Bridge at K=5 (61.14% vs 63.86%) |
 | **Hybrid RRF Fusion** | Comparison ($N=96$) | 97.92% | **100.00%** | **100.00%** | **100.00%** | 100% ceiling reached at K=10 |
 
-*Reconciliation Note on Hybrid Depth vs Main Benchmark:* Weighted average depth across subgroups for unreranked Hybrid yields 68.20% at K=5 vs 67.20% in Table 1 (S3). This 1.0 pp discrepancy stems from candidate tie-breaking under global RRF pooling across the full corpus vs subgroup partitioned candidate lists.
+*Reconciliation Note on Hybrid Depth vs Main Benchmark:* Table 4a depth curves were computed in separate subgroup evaluation batches (Bridge N=404, Comparison N=96), where RRF score ties were resolved with local index ordering. This produced a minor 5-question (1.0 pp) variance against Table 1's global combined-pool run (68.20% vs 67.20% AllSF@5, and 81.20% vs 81.00% at K=10).
 
 ---
 
@@ -169,7 +169,7 @@
 | **S8 Pipeline Miss (0)** | **12 (Ctrl only)** | 60 (Neither hit) | 72 (14.40%) |
 | **Total S5_Ctrl Status** | 414 (82.80%) | 86 (17.20%) | 500 (100.0%) |
 
-$$\text{Net Hop-2 Gain} = (\text{S8 only}) - (\text{Ctrl only}) = 26 - 12 = \mathbf{+14 \text{ questions (+2.80 pp)}}$$
+$$\text{Net Hop-2 Gain} = (\text{S8 only}) - (\text{Ctrl only}) = 26 - 12 = \mathbf{+14 \text{ questions (+2.80 pp)}} \quad (p_{\text{holm}} = 0.048)$$
 
 ---
 
