@@ -51,7 +51,9 @@
 | **S8: Staged Multi-Hop Pipeline** | **5** | **85.60%** | **92.60%** | **0.97** | **39.80%** | **51.14%** |
 | **S9: Oracle Ceiling (Gold Evidence)** | **Gold** | **100.00%** | **100.00%** | **1.00** | **53.00%** | **66.80%** |
 
-*\*Note: Ctrl_SinglePass_K10 evaluates unreranked Hybrid retrieval at context depth K=10, explaining its MRR of 0.90 vs reranked S5/S8 (0.97).*
+*\*Note on Ctrl_SinglePass_K10 and the Retrieval-to-Answer Gap:* Unreranked hybrid at context budget K=10 achieves 38.60% EM, essentially matching reranked K=5 (38.80%), versus 33.60% for unreranked hybrid at K=5. This demonstrates that the reranker's large retrieval gain adds negligible downstream accuracy once the reader is exposed to a broader passage window (10 passages). Its MRR of 0.90 reflects unreranked candidate positioning vs 0.97 for cross-encoder reranked stages.
+
+*Note on System IDs:* S4, S6, and S10 represent exploratory experimental variants (intermediate pool trials and LLM query reformulation substitution) evaluated in scratch trajectories and omitted from primary benchmark rows to maintain clean pipeline progression.
 
 ---
 
@@ -60,7 +62,7 @@
 
 | Baseline System | Baseline AllSF@5 | S8 AllSF@5 | Retrieval Gain (Δ pp) | Baseline EM | S8 EM | EM Gain (Δ pp) | McNemar Sig. (Holm) |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **vs. S1 (BM25 Okapi)** | 46.80% | **85.60%** | **+38.80 pp** | 30.80% | **39.80%** | **+9.00 pp** | **Yes (p &lt; 0.001)** |
+| **vs. S1 (BM25 Okapi)** | 46.80% | **85.60%** | **+38.80 pp** | 30.80% | **39.80%** | **+9.00 pp** | *Not tested in paired m=6* |
 | **vs. S2 (Dense BGE-Small)** | 70.60% | **85.60%** | **+15.00 pp** | 36.80% | **39.80%** | **+3.00 pp** | **No (p = 0.516)** |
 | **vs. S3 (Hybrid RRF)** | 67.20% | **85.60%** | **+18.40 pp** | 33.60% | **39.80%** | **+6.20 pp** | **Yes (p = 0.0059)** |
 | **vs. S5 (Hybrid + Rerank)** | 82.60% | **85.60%** | **+3.00 pp** | 38.80% | **39.80%** | **+1.00 pp** | **No (p = 0.851)** |
@@ -75,10 +77,12 @@
 | Ablation Variant | Component Removed | AllSF@5 (%) | Δ AllSF (pp) | F1 Score (%) | Δ F1 (pp) | EM (%) | Diagnostic Finding |
 | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :--- |
 | **S8 Staged Pipeline** | None (Full Pipeline) | **85.60%** | — | **51.14%** | — | **39.80%** | Full staged architecture reference |
-| **Abl_No_Reranker** | Minus Cross-Encoder Reranker | 63.00% | **-22.60 pp** | 45.82% | **-5.32 pp** | 35.80% | **Reranker is the linchpin ($p < 0.001$)** |
+| **Abl_No_Reranker** | Minus Cross-Encoder Reranker | 63.00% | **-22.60 pp** | 45.82% | **-5.32 pp** | 35.80% | **Reranker is linchpin ($p < 0.001$)**; scores below single-pass hybrid (67.2%) |
 | **S5_Ctrl_Pool50** | Minus Hop 2 (Single-Pass) | 82.80% | **-2.80 pp** | 49.31% | **-1.83 pp** | 38.80% | Hop-2 adds modest +2.8 pp AllSF ($p = 0.004$) |
-| **Abl_BM25_Only** | Minus Dense (BM25 only) | 80.40% | **-5.20 pp** | 51.39% | **+0.25 pp** | 40.40% | Improves all-facts recall; no downstream gain |
-| **Abl_Dense_Only** | Minus BM25 (Dense only) | 85.60% | **0.00 pp** | 51.38% | **+0.24 pp** | 40.00% | **Dense matches S8 ($p = 1.0$)**; BM25 redundant |
+| **Abl_BM25_Only** | Minus Dense (BM25 only) | 80.40% | **-5.20 pp** | 51.39% | **+0.25 pp** | 40.40% | Dense improves all-facts recall; no downstream benefit |
+| **Abl_Dense_Only** | Minus BM25 (Dense only) | 85.60% | **0.00 pp** | 51.38% | **+0.24 pp** | 40.00% | **Dense matches S8 ($p = 1.0$)**; BM25 redundant once reranked |
+
+> **Finding on Abl_No_Reranker:** Without a cross-encoder reranker, S8 drops to 63.00% AllSF@5, which is *below* unreranked single-pass hybrid S3 (67.20%). This demonstrates that snippet-augmented iterative queries inject substantial distractor noise that actively degrades retrieval recall unless filtered by neural reranking.
 
 ---
 
@@ -131,46 +135,53 @@
 | **S9_7B vs S9_3B** | Gold Oracle Passages | **EM** | 53.00% | **60.20%** | **+7.20 pp** | $[+3.60, +10.80]$ | **0.0004 (Yes)** |
 | **S9_7B vs S9_3B** | Gold Oracle Passages | **F1** | 66.80% | **75.10%** | **+8.30 pp** | $[+5.13, +11.55]$ | **0.0004 (Yes)** |
 
-> **Diagnostic Finding:** On identical retrieved evidence, scaling the generator from 3B to 7B yields +12.20 pp EM (comparable to the 3B Oracle ceiling of 53.00% EM), confirming that reader extraction capacity represents the primary constraint on downstream answering.
+> **Diagnostic Finding:** On identical retrieved evidence, the 7B reader reaches 52.00% EM, comparable to the 3B reader's gold-evidence score of 53.00% EM. Reader capacity is a major constraint on downstream accuracy; the share attributable to metric artifacts remains unquantified (see Limitations).
 
 ---
 
-## 8. Multi-Retriever Depth Curves (Table 4a)
-*Evaluates how deep each retriever must search across the 19,260-passage corpus*
+## 8. Multi-Retriever Depth Curves across Depths K∈{5,10,25,50} (Table 4a)
 
 | Retriever Architecture | Question Subgroup | AllSF@5 (%) | AllSF@10 (%) | AllSF@25 (%) | AllSF@50 (%) | Depth Saturation Behavior |
 | :--- | :--- | :---: | :---: | :---: | :---: | :--- |
 | **BM25 Sparse Okapi** | Bridge ($N=404$) | 44.06% | 60.64% | 72.28% | 77.72% | Incomplete (Missing lexical bridge) |
 | **BM25 Sparse Okapi** | Comparison ($N=96$) | 58.33% | 75.00% | 88.54% | 94.79% | High saturation |
-| **Dense BGE-Small** | Bridge ($N=404$) | 63.86% | 74.50% | 82.67% | 88.37% | Superior semantic discovery |
+| **Dense BGE-Small** | Bridge ($N=404$) | 63.86% | 74.50% | 82.67% | 88.37% | Superior semantic discovery; beats Hybrid on Bridge at K=5 and K=50 |
 | **Dense BGE-Small** | Comparison ($N=96$) | 98.96% | **100.00%** | **100.00%** | **100.00%** | 100% ceiling reached at K=10 |
-| **Hybrid RRF Fusion** | Bridge ($N=404$) | 61.14% | 76.73% | 84.65% | 88.12% | Robust dual-channel coverage |
+| **Hybrid RRF Fusion** | Bridge ($N=404$) | 61.14% | 76.73% | 84.65% | 88.12% | Underperforms Dense on Bridge at K=5 (61.14% vs 63.86%) |
 | **Hybrid RRF Fusion** | Comparison ($N=96$) | 97.92% | **100.00%** | **100.00%** | **100.00%** | 100% ceiling reached at K=10 |
+
+*Reconciliation Note on Hybrid Depth vs Main Benchmark:* Weighted average depth across subgroups for unreranked Hybrid yields 68.20% at K=5 vs 67.20% in Table 1 (S3). This 1.0 pp discrepancy stems from candidate tie-breaking under global RRF pooling across the full corpus vs subgroup partitioned candidate lists.
 
 ---
 
-## 9. Evidence Discovery & Hop-2 Accounting (Table 4b)
+## 9. Evidence Discovery & Hop-2 Paired Accounting (Table 4b)
 
-| Stage | Questions Count | Share (%) | Accounting & Mechanism |
-| :--- | :---: | :---: | :--- |
-| **Hop 1 Pool Capture** | 438 / 500 | **87.60%** | Both gold facts discoverable in initial 25-candidate hybrid pool |
-| **Hop 2 Rescued Evidence** | 32 / 500 | **6.40%** | Fact 2 missing in Hop 1 pool; rescued by iterative evidence query |
-| **Hop 2 Query Degradation** | 18 / 500 | **3.60%** | Questions where Hop 2 query introduced distractor noise, displacing gold evidence |
-| **Net Hop-2 Gain over Pool-50** | **14 / 500** | **+2.80%** | Net retrieval gain (32 rescued − 18 degraded = 14 net gain) |
-| **Reranking Truncation Loss** | 42 / 500 | **8.40%** | Questions present in pool (470) but lost upon top-5 cross-encoder truncation (428) |
-| **Never Retrieved Floor** | 30 / 500 | **6.00%** | Neither hop surfaced all facts from the 19,260-passage corpus |
+### 9.1 Funnel Breakdown across Pipeline Stages (N=500)
+- **Hop 1 Initial Pool Capture:** 438 / 500 (87.60%) — Both gold facts discoverable in initial 25-candidate hybrid pool.
+- **Hop 2 Rescued Evidence:** 32 / 500 (6.40%) — Fact 2 missing in Hop 1 pool; surfaced by iterative augmented query.
+- **Top-5 Reranking Truncation Loss:** 42 / 500 (8.40%) — Questions present in candidate pool (470 total) but lost upon top-5 cross-encoder truncation (428).
+- **Never Retrieved Floor:** 30 / 500 (6.00%) — Neither hop located all facts within the 19,260-passage corpus.
+
+### 9.2 Paired 2×2 Contingency: S8 Staged vs. S5_Ctrl Pool-50 on AllSF@5
+| Condition | S5_Ctrl Pool-50 Hit (1) | S5_Ctrl Pool-50 Miss (0) | Total S8 Status |
+| :--- | :---: | :---: | :---: |
+| **S8 Pipeline Hit (1)** | 402 (Both hit) | **26 (S8 only)** | 428 (85.60%) |
+| **S8 Pipeline Miss (0)** | **12 (Ctrl only)** | 60 (Neither hit) | 72 (14.40%) |
+| **Total S5_Ctrl Status** | 414 (82.80%) | 86 (17.20%) | 500 (100.0%) |
+
+$$\text{Net Hop-2 Gain} = (\text{S8 only}) - (\text{Ctrl only}) = 26 - 12 = \mathbf{+14 \text{ questions (+2.80 pp)}}$$
 
 ---
 
 ## 10. Qualitative Error Breakdown (Table 4c, N=60 Hand-Verified Failures)
-*Single-annotator verification on randomized stratified error sample with Wilson score 95% CIs*
+*Single-annotator verification on randomized stratified error sample with Wilson score 95% CIs. Note: Single-annotator categorization has no inter-annotator agreement estimate.*
 
-| Mutually Exclusive Failure Tag | Frequency | Share (%) | Wilson 95% CI | Failure Mechanism |
+| Mutually Exclusive Failure Tag | Frequency | Share (%) | Wilson 95% CI | Decision Rule & Failure Mechanism |
 | :--- | :---: | :---: | :---: | :--- |
-| **Granularity / Format Artifact** | 22 / 60 | **36.70%** | $[25.5\%, 49.3\%]$ | Semantically correct answer penalized by exact match string formatting |
-| **Reasoning Failure under Evidence** | 19 / 60 | **31.70%** | $[21.2\%, 44.2\%]$ | Partial/full gold evidence in prompt; reader failed multi-hop synthesis |
-| **Retrieval Gap (Missing Fact 2)** | 13 / 60 | **21.70%** | $[13.1\%, 33.6\%]$ | Hop 1 retrieved Fact 1, but Hop 2 failed to bridge to Fact 2 |
-| **Span Extraction Error** | 6 / 60 | **10.00%** | $[4.7\%, 20.1\%]$ | Both facts retrieved; generator extracted adjacent distractor entity |
+| **Granularity / Format Artifact** | 22 / 60 | **36.70%** | $[25.5\%, 49.3\%]$ | Both gold facts present; generated answer is semantically accurate but fails exact string match (e.g., abbreviation, missing title prefix). |
+| **Reasoning Failure under Evidence** | 19 / 60 | **31.70%** | $[21.2\%, 44.2\%]$ | Partial or full gold evidence retrieved in prompt; reader fails logical synthesis across entity constraints. |
+| **Retrieval Gap (Missing Fact 2)** | 13 / 60 | **21.70%** | $[13.1\%, 33.6\%]$ | Hop 1 retrieved Fact 1, but Hop 2 query failed to bridge to Fact 2 (evidence missing from prompt). |
+| **Span Extraction Error** | 6 / 60 | **10.00%** | $[4.7\%, 20.1\%]$ | Both facts retrieved; generator extracted adjacent distractor entity from the correct paragraph. |
 
 ---
 
@@ -188,11 +199,14 @@
 ## 🛠️ Reproduction & Artifacts
 - **`index.html`**: Standalone publication-ready HTML dashboard containing all diagnostic tables with color-coding and footnotes.
 - **`RAG_Research_Evaluation_Final.ipynb`**: Complete execution notebook containing all pipelines, indexing, evaluation loops, bootstrap testing, and McNemar test implementations.
-- **`README.md`**: Master diagnostic documentation and empirical findings.
+- **Decoding Hyperparameters:** Greedy decoding (`do_sample=False`), temperature = 0.0, max_new_tokens = 32, repetition_penalty = 1.0. Seed = 42 for all bootstrap resamples.
+- **Hardware:** Dual NVIDIA Tesla T4 GPUs (16 GB VRAM each), Kaggle environment.
 
 ---
 
-## 📜 Experimental Scope & Methodological Details
-- **Corpus Construction:** The evaluation index consists of 19,260 passages constructed by pooling all gold supporting passages and distractors from the HotpotQA development set (distractor split).
-- **Subsample Size:** N=500 questions evaluated across 13 systems (6,500 inference passes).
+## 📜 Experimental Scope & Methodological Limitations
+- **Corpus Construction:** The evaluation index consists of 19,260 passages constructed by pooling all gold supporting passages and distractors from the HotpotQA development set (distractor split). Numbers are not directly comparable to open-domain full-Wikipedia indexes.
+- **Subsample Size:** N=500 questions evaluated across primary baselines (6,500 inference passes under 3B, plus 1,000 passes under 7B scaling diagnostic). Single subset evaluated; multi-split variance remains unquantified.
 - **Generator Families:** Evaluated on Qwen-2.5 instruction-tuned series (3B and 7B). Potential pretraining exposure to HotpotQA text cannot be fully ruled out.
+- **Metric Artifacts:** Exact Match understates system efficacy due to strict surface-form constraints (36.7% of errors); alias-aware EM was not evaluated.
+- **Latency Scope:** Table 5 benchmarks the retrieval stack exclusively; downstream reader generation adds ~0.45 s/query (3B) and ~0.91 s/query (7B).
