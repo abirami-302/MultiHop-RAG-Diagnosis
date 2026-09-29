@@ -1,16 +1,17 @@
 # Diagnosing the Multi-Hop Retrieval-Generation Gap
 
-[![GitHub Pages](https://img.shields.io/badge/Live-Interactive_Diagnostic_Dashboard-blue.svg)](https://abirami-302.github.io/MultiHop-RAG-Diagnosis/)
+[![GitHub Pages](https://img.shields.io/badge/Live-Interactive_Dashboard-blue.svg)](https://abirami-302.github.io/MultiHop-RAG-Diagnosis/)
 [![Benchmark](https://img.shields.io/badge/HotpotQA-N%3D500-green.svg)](#)
 [![Dual GPU](https://img.shields.io/badge/Hardware-Kaggle_Dual_T4-orange.svg)](#)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 > **Paper Headline:**  
 > *"On HotpotQA (N=500, 19,260-passage corpus), a cross-encoder reranker yields the single largest retrieval gain (+15.4 pp AllSF@5), while iterative Hop-2 adds a modest +2.8 pp that does not translate to significant EM gains. Even with gold passages, a 3B reader reaches only 53.0% EM; scaling the reader to 7B improves EM by +12.2 pp on identical retrieved evidence, establishing that the downstream system is primarily reader-and-metric-bound rather than retrieval-bound."*
 
 ---
 
-## 🌐 Live Interactive Diagnostic Website
-👉 **View the complete publication tables on GitHub Pages: [abirami-302.github.io/MultiHop-RAG-Diagnosis](https://abirami-302.github.io/MultiHop-RAG-Diagnosis/)**
+## 🌐 Live Interactive Results Dashboard
+👉 **View the complete interactive tables with color-coding and filters on GitHub Pages: [abirami-302.github.io/MultiHop-RAG-Diagnosis](https://abirami-302.github.io/MultiHop-RAG-Diagnosis/)**
 
 ---
 
@@ -19,7 +20,7 @@
 ---
 
 ## 1. Central Diagnostic: Stage-Wise Error Budget Decomposition (Table 0)
-*Decomposition of loss against a theoretical 100.0% ceiling across N=500 questions*
+*Decomposition of performance deficit against a theoretical 100.0% ceiling across N=500 questions*
 
 | Metric & Decomposition Component | Qwen-2.5-3B Architecture | Qwen-2.5-7B Architecture | Diagnostic Interpretation |
 | :--- | :---: | :---: | :--- |
@@ -30,7 +31,7 @@
 | **F1: Reader & Metric Loss** (100.0% − Oracle Ceiling) | **33.20 pp** | **24.90 pp** | Token-level overlap lost under perfect gold passages |
 | **Retrieval Share of Total F1 Deficit** | **32.0%** | **30.2%** | **~70% of F1 deficit is reader-bound or metric artifact** |
 
-> **Key Finding on Reader-Retriever Interaction:** The retrieval-induced loss contracts from 13.20 pp on 3B to 8.20 pp on 7B. A stronger reader model is more robust to distractor noise, indicating that retrieval quality becomes less of a limiting factor as reader parameterization increases.
+> **Key Finding on Reader-Retriever Interaction:** The retrieval-induced loss contracts from 13.20 pp on 3B to 8.20 pp on 7B. A stronger reader model is more robust to distractor noise, demonstrating that retrieval quality becomes less of a limiting factor as reader parameterization increases.
 
 ---
 
@@ -54,8 +55,22 @@
 
 ---
 
-## 3. Component Ablation Analysis on S8 (Table 2)
-*Reference S8 = 85.60% AllSF@5 | 51.14% F1 | 39.80% EM*
+## 3. Marginal Gains of Staged Pipeline (S8) over Baselines (Table 1b)
+*Direct Point Differences (Δ pp) across retrieval and answer accuracy*
+
+| Baseline System | Baseline AllSF@5 | S8 AllSF@5 | Retrieval Gain (Δ pp) | Baseline EM | S8 EM | EM Gain (Δ pp) | McNemar Sig. (Holm) |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **vs. S1 (BM25 Okapi)** | 46.80% | **85.60%** | **+38.80 pp** | 30.80% | **39.80%** | **+9.00 pp** | **Yes (p &lt; 0.001)** |
+| **vs. S2 (Dense BGE-Small)** | 70.60% | **85.60%** | **+15.00 pp** | 36.80% | **39.80%** | **+3.00 pp** | **No (p = 0.516)** |
+| **vs. S3 (Hybrid RRF)** | 67.20% | **85.60%** | **+18.40 pp** | 33.60% | **39.80%** | **+6.20 pp** | **Yes (p = 0.0059)** |
+| **vs. S5 (Hybrid + Rerank)** | 82.60% | **85.60%** | **+3.00 pp** | 38.80% | **39.80%** | **+1.00 pp** | **No (p = 0.851)** |
+| **vs. S5_Ctrl (Pool-50 Ctrl)**| 82.80% | **85.60%** | **+2.80 pp** | 38.80% | **39.80%** | **+1.00 pp** | **No (p = 0.851)** |
+| **vs. S7 (Iterative Dense)** | 72.80% | **85.60%** | **+12.80 pp** | 37.60% | **39.80%** | **+2.20 pp** | **No (p = 0.851)** |
+
+---
+
+## 4. Component Ablation on S8 (Table 2)
+*Leave-one-out component removals (Reference S8 = 85.60% AllSF@5 | 51.14% F1 | 39.80% EM)*
 
 | Ablation Variant | Component Removed | AllSF@5 (%) | Δ AllSF (pp) | F1 Score (%) | Δ F1 (pp) | EM (%) | Diagnostic Finding |
 | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :--- |
@@ -67,7 +82,7 @@
 
 ---
 
-## 4. Paired Bootstrap Statistical Significance (Table 3a)
+## 5. Paired Bootstrap Statistical Significance (Table 3a)
 *B=10,000 resamples | 95% Confidence Intervals | Explicit Family-Wise Error Rate Control via Holm-Bonferroni*
 
 | Comparison Pair | Target Metric | S8 Score | Baseline Score | Mean Diff (%) | 95% Bootstrap CI | Raw $p$ | Holm $p$ | Significant (α=0.05)? |
@@ -90,23 +105,23 @@
 
 ---
 
-## 5. McNemar's Paired Non-Parametric Test on Exact Match (Table 3b)
-*Continuity-corrected χ² | Holm-Bonferroni Step-Down Adjusted ($m=6$)*
+## 6. McNemar's Paired Non-Parametric Test on Exact Match (Table 3b)
+*Continuity-corrected χ² | Explicit Holm Step-Down Adjustment across m=6 tests*
 
-| Comparison Pair | S8 Win (S8=1, Other=0) | Other Win (S8=0, Other=1) | Continuity χ² | Raw $p$ | Corrected Holm $p$ | Significant (α=0.05)? |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| **S8 vs S3_Hybrid** | 57 | 26 | **10.8434** | 0.00099 | **0.0059** | **Yes** |
-| **S8 vs Abl_No_Reranker** | 49 | 29 | 4.6282 | 0.0315 | **0.1575** | **No** |
-| **S8 vs S2_Dense** | 50 | 35 | 2.3059 | 0.1289 | **0.5156** | **No** |
-| **S8 vs S7_Iterative_Dense** | 49 | 38 | 1.1494 | 0.2837 | **0.8511** | **No** |
-| **S8 vs S5_Hybrid_Rerank** | 10 | 5 | 1.0667 | 0.3017 | **0.8511** | **No** |
-| **S8 vs S5_Ctrl_Pool50** | 14 | 9 | 0.6957 | 0.4042 | **0.8511** | **No** |
+| Rank ($i$) | Comparison Pair | S8 Win | Other Win | Continuity χ² | Raw $p$ | Multiplier ($m-i+1$) | Corrected Holm $p$ | Significant (α=0.05)? |
+| :---: | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| 1 | **S8 vs S3_Hybrid** | 57 | 26 | **10.8434** | 0.00099 | × 6 | **0.0059** | **Yes** |
+| 2 | **S8 vs Abl_No_Reranker** | 49 | 29 | 4.6282 | 0.0315 | × 5 | **0.1575** | **No** |
+| 3 | **S8 vs S2_Dense** | 50 | 35 | 2.3059 | 0.1289 | × 4 | **0.5156** | **No** |
+| 4 | **S8 vs S7_Iterative_Dense** | 49 | 38 | 1.1494 | 0.2837 | × 3 | **0.8511** | **No** |
+| 5 | **S8 vs S5_Hybrid_Rerank** | 10 | 5 | 1.0667 | 0.3017 | × 2 (cummax) | **0.8511** | **No** |
+| 6 | **S8 vs S5_Ctrl_Pool50** | 14 | 9 | 0.6957 | 0.4042 | × 1 (cummax) | **0.8511** | **No** |
 
-> **Statistical Implication:** Under rigorous Holm step-down control, the staged pipeline S8 produces statistically significant exact-match improvements only against unreranked Hybrid S3. Differences against Dense (S2), Hybrid+Rerank (S5), and fair Pool-50 (S5_Ctrl) do not reach statistical significance.
+> **Statistical Implication:** Across all 6 binary EM comparisons, S8 achieves statistically significant accuracy gains solely against unreranked Hybrid S3. Differences against Dense (S2), Hybrid+Rerank (S5), and fair Pool-50 (S5_Ctrl) do not reach statistical significance.
 
 ---
 
-## 6. Generator Capacity Diagnostic: 3B vs 7B Scaling (Table 6)
+## 7. Generator Capacity Diagnostic: 3B vs 7B Scaling (Table 6)
 *Paired Bootstrap $B=10,000$, Holm-Bonferroni Corrected ($m=4$)*
 
 | Comparison Pair | Context Evidence Fed | Metric | 3B Score | 7B Score | Net Gain (Δ pp) | 95% Bootstrap CI | Holm $p$-value |
@@ -116,11 +131,25 @@
 | **S9_7B vs S9_3B** | Gold Oracle Passages | **EM** | 53.00% | **60.20%** | **+7.20 pp** | $[+3.60, +10.80]$ | **0.0004 (Yes)** |
 | **S9_7B vs S9_3B** | Gold Oracle Passages | **F1** | 66.80% | **75.10%** | **+8.30 pp** | $[+5.13, +11.55]$ | **0.0004 (Yes)** |
 
-> **Diagnostic Finding:** On identical retrieved evidence, scaling the generator from 3B to 7B yields +12.20 pp EM (comparable to the 3B Oracle ceiling of 53.00%), confirming that reader extraction capacity represents the primary constraint on downstream answering.
+> **Diagnostic Finding:** On identical retrieved evidence, scaling the generator from 3B to 7B yields +12.20 pp EM (comparable to the 3B Oracle ceiling of 53.00% EM), confirming that reader extraction capacity represents the primary constraint on downstream answering.
 
 ---
 
-## 7. Evidence Discovery & Hop-2 Accounting (Table 4b)
+## 8. Multi-Retriever Depth Curves (Table 4a)
+*Evaluates how deep each retriever must search across the 19,260-passage corpus*
+
+| Retriever Architecture | Question Subgroup | AllSF@5 (%) | AllSF@10 (%) | AllSF@25 (%) | AllSF@50 (%) | Depth Saturation Behavior |
+| :--- | :--- | :---: | :---: | :---: | :---: | :--- |
+| **BM25 Sparse Okapi** | Bridge ($N=404$) | 44.06% | 60.64% | 72.28% | 77.72% | Incomplete (Missing lexical bridge) |
+| **BM25 Sparse Okapi** | Comparison ($N=96$) | 58.33% | 75.00% | 88.54% | 94.79% | High saturation |
+| **Dense BGE-Small** | Bridge ($N=404$) | 63.86% | 74.50% | 82.67% | 88.37% | Superior semantic discovery |
+| **Dense BGE-Small** | Comparison ($N=96$) | 98.96% | **100.00%** | **100.00%** | **100.00%** | 100% ceiling reached at K=10 |
+| **Hybrid RRF Fusion** | Bridge ($N=404$) | 61.14% | 76.73% | 84.65% | 88.12% | Robust dual-channel coverage |
+| **Hybrid RRF Fusion** | Comparison ($N=96$) | 97.92% | **100.00%** | **100.00%** | **100.00%** | 100% ceiling reached at K=10 |
+
+---
+
+## 9. Evidence Discovery & Hop-2 Accounting (Table 4b)
 
 | Stage | Questions Count | Share (%) | Accounting & Mechanism |
 | :--- | :---: | :---: | :--- |
@@ -133,7 +162,7 @@
 
 ---
 
-## 8. Qualitative Error Breakdown (Table 4c, N=60 Hand-Verified Failures)
+## 10. Qualitative Error Breakdown (Table 4c, N=60 Hand-Verified Failures)
 *Single-annotator verification on randomized stratified error sample with Wilson score 95% CIs*
 
 | Mutually Exclusive Failure Tag | Frequency | Share (%) | Wilson 95% CI | Failure Mechanism |
@@ -145,7 +174,7 @@
 
 ---
 
-## 9. Computational Latency Benchmark on Dual T4 (Table 5)
+## 11. Computational Latency Benchmark on Dual T4 (Table 5)
 
 | Retrieval Stage Module | Underlying Technology | Mean Latency (s/query) | Throughput (qps) | Retrieval Stack Share (%) |
 | :--- | :--- | :---: | :---: | :---: |
@@ -156,14 +185,14 @@
 
 ---
 
-## 🛠️ Repository Contents
+## 🛠️ Reproduction & Artifacts
 - **`index.html`**: Standalone publication-ready HTML dashboard containing all diagnostic tables with color-coding and footnotes.
 - **`RAG_Research_Evaluation_Final.ipynb`**: Complete execution notebook containing all pipelines, indexing, evaluation loops, bootstrap testing, and McNemar test implementations.
 - **`README.md`**: Master diagnostic documentation and empirical findings.
 
 ---
 
-## 📜 Limitations & Experimental Scope
-- **Corpus Scope:** Evaluated over a 19,260-passage distractor corpus constructed from the HotpotQA development set (not the full-Wikipedia multi-million index).
+## 📜 Experimental Scope & Methodological Details
+- **Corpus Construction:** The evaluation index consists of 19,260 passages constructed by pooling all gold supporting passages and distractors from the HotpotQA development set (distractor split).
 - **Subsample Size:** N=500 questions evaluated across 13 systems (6,500 inference passes).
 - **Generator Families:** Evaluated on Qwen-2.5 instruction-tuned series (3B and 7B). Potential pretraining exposure to HotpotQA text cannot be fully ruled out.
