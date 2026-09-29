@@ -1,6 +1,6 @@
 # Diagnosing the Multi-Hop Retrieval-Generation Gap
 
-[![GitHub Pages](https://img.shields.io/badge/Live-Interactive_Tables-blue.svg)](https://abirami0209.github.io/MultiHop-RAG-Diagnosis/)
+[![GitHub Pages](https://img.shields.io/badge/Live-Interactive_Tables-blue.svg)](https://abirami-302.github.io/MultiHop-RAG-Diagnosis/)
 [![Benchmark](https://img.shields.io/badge/HotpotQA-N%3D500-green.svg)](#)
 [![Dual GPU](https://img.shields.io/badge/Hardware-Kaggle_Dual_T4-orange.svg)](#)
 
@@ -10,7 +10,7 @@
 ---
 
 ## 🌐 Live Interactive Results Table
-👉 **View the full publication-styled interactive tables live on GitHub Pages: [abirami0209.github.io/MultiHop-RAG-Diagnosis](https://abirami0209.github.io/MultiHop-RAG-Diagnosis/)**
+👉 **View the full publication-styled interactive tables live on GitHub Pages: [abirami-302.github.io/MultiHop-RAG-Diagnosis](https://abirami-302.github.io/MultiHop-RAG-Diagnosis/)**
 
 ---
 
