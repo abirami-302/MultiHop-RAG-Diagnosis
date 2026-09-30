@@ -315,17 +315,37 @@ def build_paper():
     # 2. RELATED WORK
     add_sec_heading("2. Related Work", level=1)
     add_p(
-        "Dense passage retrieval [2] maps questions and candidate documents into a shared continuous semantic space via dual-encoder "
-        "architectures. While effective for single-fact lookups, dense retrieval frequently misses lexical exact-matches such as entity acronyms and numerical codes, "
-        "leading to the resurgence of hybrid retrieval paradigms that combine dense vectors with BM25 Okapi [11] via Reciprocal Rank Fusion (RRF) [13]. "
-        "Cross-encoder neural rerankers [14] further refine candidate pools by performing full token-level cross-attention over query-document pairs, yielding "
-        "substantial precision gains at the cost of quadratic computational complexity."
+        "Dense passage retrieval [2] established the feasibility of replacing sparse inverted indices with dual-encoder representations "
+        "trained via contrastive loss. Karpukhin et al. trained separate BERT-base models for questions and passages on Natural Questions and TriviaQA, "
+        "indexing over 21 million Wikipedia documents using FAISS. While their work demonstrated substantial gains over BM25 on single-hop queries, "
+        "their architecture was fundamentally evaluated on open-domain datasets where target answers frequently reside within isolated paragraphs. In our setup, "
+        "by contrast, the reader must resolve compositional dependencies across two disconnected texts hidden within an adversarial 19,260-passage corpus. "
+        "Dense models often struggle here because they lack the exact surface-form string matching required to catch non-standard proper nouns and catalog "
+        "identifiers, leading to vocabulary mismatch problems that dual encoders cannot bridge reliably on their own."
     )
     add_p(
-        "For complex questions requiring multi-hop reasoning, single-pass retrieval often fails because the second supporting fact depends on entity links "
-        "uncovered only in the first fact [4]. Iterative retrieval frameworks such as IRCoT [5] and DSP [6] address this by interleaving chain-of-thought "
-        "generation with iterative retrieval calls. However, as Min et al. [20] observed, many multi-hop benchmark questions contain reasoning shortcuts "
-        "where partial evidence suffices for answering, raising questions about whether iterative retrieval is always necessary."
+        "Benchmark evaluations such as BEIR have repeatedly shown that lexical BM25 Okapi [11] remains resilient when domains shift or queries turn specialized. "
+        "Robertson and Zaragoza formalized the probabilistic term-weighting framework, penalizing high-frequency terms through non-linear term-frequency saturation "
+        "and document-length normalization. In standard multi-hop benchmarks, BM25 operates effectively on the first question hop because user queries almost always "
+        "contain explicit named entities matching Wikipedia page titles. But the lexical bridge breaks down immediately on the second hop. Because the entity "
+        "linking the intermediate fact to the final target is completely missing from the original query, standard term matching cannot rank the second paragraph "
+        "without query expansion or vector-space projections."
+    )
+    add_p(
+        "Cross-encoder architectures resolve this semantic gap by concatenating query and passage tokens into a single sequence, running full self-attention "
+        "across every layer [14]. Nogueira and Cho demonstrated that token-level cross-attention between queries and documents yields massive improvements "
+        "in precision over dual-encoder bi-encoders, though at the expense of computational latency. Whereas standard bi-encoders precompute document representations "
+        "and rely on fast inner-product operations, a cross-encoder must evaluate candidate pairs dynamically at inference time. Our profiling confirms that this quadratic "
+        "attention mechanism dominates the entire retrieval pipeline latency, spending 0.456 seconds per query—over 32 times slower than dense vector search."
+    )
+    add_p(
+        "Iterative frameworks attempt to bypass this cost by breaking multi-step questions into consecutive retrieval passes. Trivedi et al. [5] introduced IRCoT, "
+        "which interleaves chain-of-thought generation with retrieval calls using Codex and large open models across HotpotQA and 2WikiMultihopQA. In their setup, "
+        "an LLM generates an exploratory thought step, uses that partial text to search the index, and repeats the cycle until a termination criterion is met. "
+        "Similarly, beam-retrieval architectures expand candidate passage trees at each step to maintain a diverse frontier of reasoning paths [6]. Our study adopts "
+        "a more constrained, staged protocol: rather than running unconstrained LLM agent loops, we enforce an empirical comparison using open-weights 3B and 7B readers "
+        "over a standardized, distractor-heavy pooled index. This controlled scope lets us isolate whether downstream gains stem from genuine multi-hop evidence capture "
+        "or simply from giving the model larger candidate pools."
     )
     add_p(
         "At the same time, empirical rigor and statistical validation remain inconsistently applied across published RAG evaluations [21]. "
@@ -387,6 +407,32 @@ def build_paper():
         "max_new_tokens=32) using Qwen2.5-3B-Instruct [18] as our default reader, and Qwen2.5-7B-Instruct for our parameter scaling diagnostic. "
         "The reader prompt follows standard instruction formatting:\n"
         "'Answer the question concisely based only on the provided documents. Answer with just the entity name, number, or yes/no.\n\nDocuments:\n[Context]\n\nQuestion: [Query]\nAnswer:'"
+    )
+
+    add_sec_heading("3.3.1 Fusion Mechanics, Prompt Constraints, and Worked Error Attribution", level=3)
+    add_p(
+        "To combine lexical and semantic candidates without hand-tuning score normalizers, we use Reciprocal Rank Fusion (RRF) [13]. Given a ranked candidate list "
+        "R_BM25 from sparse retrieval and R_Dense from dense vector search, the fused score for any passage p is calculated as:\n"
+        "RRF(p) = Σ_{m ∈ {BM25, Dense}} [1 / (k + r_m(p))]\n"
+        "where r_m(p) denotes the 1-indexed rank of passage p within retriever m's candidate pool, and k is a constant smoothing parameter fixed at 60. "
+        "If a passage appears in only one retriever's candidate list, its reciprocal term for the missing list evaluates to zero. In our pipeline, BM25 and dense retrieval "
+        "each return an initial pool of 100 candidates. The top-25 passages ranked by RRF(p) form the intermediate candidate set fed into the reranker."
+    )
+    add_p(
+        "To evaluate operational cost, we benchmarked the execution time of each retrieval component across 30 evaluation queries after 5 warm-up cycles. "
+        "The cross-encoder reranker accounts for 69.1% of cumulative retrieval stage latency (0.4560 s out of 0.6592 s combined execution time across dense search, "
+        "BM25 indexing, RRF merging, and reranking), processing queries at 2.2 queries per second. By comparison, dense vector search requires only 0.0139 s (71.9 qps), "
+        "making the reranker 32.8× slower than bi-encoder retrieval."
+    )
+    add_p(
+        "To isolate how much downstream performance loss stems from missing retrieval evidence versus generator reasoning limits, we evaluate the Exact Match (EM) figures "
+        "for our primary 3B reader. The theoretical ceiling is 100.00%, the gold-evidence Oracle score (S9) is 53.00%, and the full staged pipeline (S8) achieves 39.80%. "
+        "We calculate the two component losses:\n"
+        "• Retrieval Loss = Oracle EM − S8 EM = 53.00% − 39.80% = 13.20 pp\n"
+        "• Reader/Metric Loss = 100.00% − Oracle EM = 100.00% − 53.00% = 47.00 pp\n"
+        "The total performance deficit below perfect execution is 100.00% − 39.80% = 60.20 pp. Calculating retrieval's attributed share of this total deficit gives:\n"
+        "Retrieval Share = Retrieval Loss / Total Deficit = 13.20 / 60.20 = 21.93% ≈ 21.9%.\n"
+        "This leaves the remaining 78.07% (47.00 / 60.20) of the deficit driven entirely by reader reasoning failures and surface-form string mismatches."
     )
 
     add_sec_heading("3.4 Statistical Testing Protocol", level=2)
@@ -906,10 +952,37 @@ def build_paper():
         "While AllSF and EM correlate strongly across baselines (r ≈ 0.97), gains beyond 70% AllSF yield sharply compressed downstream benefits [8, 10]."
     )
     add_p(
-        "Throughout our experiments, neural cross-encoder reranking consistently emerges as the dominant retrieval lever, contributing +15.40 pp in AllSF@5. "
-        "Iterative second-hop retrieval contributes an incremental +2.80 pp AllSF gain over fair single-pass controls, which fails to produce a statistically detectable "
-        "improvement in downstream Exact Match (p_holm = 0.8511). As demonstrated in our 2×2 contingency analysis, the 26 questions gained by Hop 2 are partially "
-        "counterbalanced by 12 questions degraded by query noise."
+        "Our depth-curve evaluations revealed a stark contrast across question categories that deserves closer scrutiny. Comparison questions hit a performance "
+        "ceiling almost immediately: dense vector search alone placed all necessary supporting passages in the top-5 context for 98.96% of comparison instances, "
+        "and reached an absolute 100.00% by depth 10. The reason is straightforward. Comparison questions explicitly name both target entities in the user prompt "
+        "(for example, comparing the release dates of two specific films or the birthplaces of two athletes). Because both lexical anchors are visible from the start, "
+        "single-pass dense dual encoders embed both semantic targets simultaneously. No iterative bridging is needed. This empirical reality raises an important "
+        "question for multi-hop QA benchmarks: retaining balanced mixtures of comparison queries artificially inflates multi-hop retrieval statistics, creating "
+        "an illusion of multi-step reasoning where standard single-pass vector matching already solves the lookup. Future benchmarks must separate compositional "
+        "dependencies from multi-entity comparisons if they hope to measure multi-hop synthesis honestly."
+    )
+    add_p(
+        "We must also be candid about the size of our evaluation corpus. Our index consists of 19,260 passages drawn from 2,000 HotpotQA development set questions [4]. "
+        "While this corpus is challenging because it concentrates hard distractors that share high surface-form overlap with query terms, it is still orders of magnitude "
+        "smaller than a full 5-million-page Wikipedia dump. We suspect our reported absolute recall figures—such as 85.60% AllSF@5 for the full pipeline—are noticeably "
+        "higher than what the same pipeline would achieve on open-web indices. In a 5-million-page index, retrieval dilution grows severe. The probability of retrieving "
+        "semantically adjacent but factually irrelevant distractor paragraphs rises exponentially, which would likely drag down single-pass dense retrieval and increase "
+        "the reranker's filtering burden. Testing whether our core finding—that reader reasoning constraints outweigh retrieval gaps—holds at web scale remains an open empirical challenge."
+    )
+    add_p(
+        "For engineers and practitioners working under fixed compute budgets, these findings point to clear architectural trade-offs. The cross-encoder reranker accounts "
+        "for 69.1% of our cumulative retrieval stage latency (0.4560 s out of 0.6592 s combined execution time), processing queries at just 2.2 queries per second. "
+        "That is a heavy operational tax. If a production system has enough context budget to feed ten unreranked passages directly to the reader model, our single-pass "
+        "K=10 baseline demonstrates that it achieves 38.60% Exact Match. That is statistically indistinguishable from the 38.80% Exact Match achieved by running expensive "
+        "cross-encoder reranking over a five-passage context. If latency and hosting costs matter, widening the generator's context window is frequently more practical "
+        "than inserting a heavy transformer-based reranker."
+    )
+    add_p(
+        "We initially expected the second retrieval hop to provide broader downstream benefits than it actually delivered. In our retrieval recovery audit, Hop-2 query "
+        "augmentation successfully surfaced missing gold facts for only 32 questions (6.40% of the benchmark). More critically, when looking at downstream question "
+        "answering, the net advantage over our fair single-pass control (S5_Ctrl) was remarkably narrow: S8 achieved 14 Exact Match wins against 9 losses—a net gain of "
+        "just 5 questions out of 500 (+1.00 pp EM, p = 0.8511). We had not fully appreciated how frequently appending Hop-1 snippets introduces distracting context that "
+        "degrades reader focus, largely neutralizing the modest retrieval gains before they can reach the final answer."
     )
     add_p(
         "Meanwhile, generator parameterization exerts an overwhelming influence. Scaling from a 3B to a 7B reader model on identical retrieved passages produces "
@@ -918,20 +991,36 @@ def build_paper():
         "intricate retrieval loops [23]."
     )
 
-    # 6. LIMITATIONS
-    add_sec_heading("6. Limitations", level=1)
+    # 6. THREATS TO VALIDITY & LIMITATIONS
+    add_sec_heading("6. Threats to Validity and Limitations", level=1)
+    
+    add_sec_heading("6.1 Threats to Validity", level=2)
     add_p(
-        "We note several concrete methodological limitations of this study:\n"
+        "Several methodological threats could affect the interpretation and generalizability of our results.\n"
+        "• Single-Seed Evaluation: Our pooled corpus and question sampling rely on a fixed random seed (SEED=42). While standardizing the seed was essential to maintain "
+        "identical evaluation contexts across all thirteen model configurations, it introduces a potential sampling dependency. Running identical evaluations across "
+        "multiple independently drawn corpus samples would provide narrower empirical variance bounds, though the stability of our bootstrap percentile distributions "
+        "suggests that core rankings are unlikely to shuffle under different sampling seeds.\n"
+        "• Subgroup Sample Size and Statistical Power: Although our evaluation set (N=500) provides sufficient power for primary significance tests, our question-type "
+        "breakdown contains an uneven distribution: 404 bridge questions versus only 96 comparison questions. This 80.8% to 19.2% split mirrors the natural composition "
+        "of HotpotQA, but it leaves tests on the comparison subset underpowered. With n=96, statistical tests are capable of detecting only large effect sizes (Δ > 8 pp), "
+        "meaning subtle differences in comparison-question answering could easily escape statistical detection.\n"
+        "• Single-Annotator Error Classification: Our qualitative failure taxonomy was built from a hand-verified audit of 60 randomly sampled prediction failures. "
+        "Because these 60 instances were categorized by a single author, we cannot compute formal inter-annotator agreement metrics such as Cohen's kappa. While we minimized "
+        "subjectivity by defining rigid boundary conditions—such as classifying an error as a format artifact only if the predicted span was an exact semantic alias of the gold "
+        "string—some ambiguity between reasoning breakdown and span extraction errors is inevitable when inspecting raw generation logs. Replicating this failure audit across "
+        "multiple independent annotators would help firm up the category boundaries."
+    )
+
+    add_sec_heading("6.2 Methodological Limitations", level=2)
+    add_p(
+        "Beyond validity threats, we note several concrete scope limitations:\n"
         "1. Corpus Construction: Our evaluation index comprises 19,260 passages constructed by pooling gold and distractor paragraphs from the HotpotQA development set [4]. "
         "While challenging due to dense distractor competition, this corpus is substantially smaller than full 5-million-page Wikipedia dumps, where retrieval "
         "dilution may follow different scaling dynamics.\n"
-        "2. Subgroup Sample Size: All evaluations were conducted on a single fixed subset of 500 questions (N=500). While sufficient to power paired testing across "
-        "the full set, the 96 comparison questions represent a relatively small sample, meaning subtle subgroup differences may be underpowered.\n"
-        "3. Generator Architecture: Experiments were restricted to the Qwen2.5 open-weights series (3B and 7B) [18]. While representative of modern dense instruct models, "
+        "2. Generator Architecture: Experiments were restricted to the Qwen2.5 open-weights series (3B and 7B) [18]. While representative of modern dense instruct models, "
         "we cannot entirely rule out potential pre-training exposure to HotpotQA text.\n"
-        "4. Single-Annotator Error Audit: Our qualitative analysis of 60 failure cases was hand-verified by a single annotator; consequently, inter-annotator agreement "
-        "(e.g., Cohen's kappa) could not be calculated.\n"
-        "5. Metric Constraints: We adhered to standard HotpotQA Exact Match and token F1 metrics. Evaluating alias-aware or model-based semantic evaluation metrics was beyond "
+        "3. Metric Constraints: We adhered to standard HotpotQA Exact Match and token F1 metrics. Evaluating alias-aware or model-based semantic evaluation metrics was beyond "
         "the scope of this study."
     )
 

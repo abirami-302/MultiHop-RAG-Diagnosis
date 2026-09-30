@@ -13,6 +13,11 @@
 ## 🌐 Live Interactive Results Dashboard
 👉 **View the complete interactive tables with color-coding and filters on GitHub Pages: [abirami-302.github.io/MultiHop-RAG-Diagnosis](https://abirami-302.github.io/MultiHop-RAG-Diagnosis/)**
 
+## 🔬 Reproducibility & Audit Trail
+- **[REPRODUCIBILITY.md](REPRODUCIBILITY.md)**: Full verification guide mapping every paper table directly to raw output files in `OUT/` (`tracker.csv`, `results_overall.csv`, `depth_curve.csv`), exact hyperparameter specs, Kaggle dual-T4 replication instructions, and formal data integrity audit notes.
+- **[CHANGELOG.md](CHANGELOG.md)**: Transparent revision history and audit record (including the formal retraction and removal of the unverified S10 exploratory trial).
+- **Raw Execution Outputs**: All 500-question itemized logs and prediction records are preserved in `OUT/tracker.csv`, making every percentage and statistical claim in the paper directly and independently auditable.
+
 ---
 
 # Empirical Diagnostic Evaluation Suite
