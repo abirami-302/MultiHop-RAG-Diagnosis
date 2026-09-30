@@ -181,17 +181,23 @@ def build_paper():
     p_aut = doc.add_paragraph()
     p_aut.alignment = WD_ALIGN_PARAGRAPH.CENTER
     p_aut.paragraph_format.space_before = Pt(2)
-    p_aut.paragraph_format.space_after = Pt(1)
-    r_aut = p_aut.add_run("Abirami K\nDepartment of Computer Science and Engineering\nabiramikondaiyan@gmail.com")
+    p_aut.paragraph_format.space_after = Pt(2)
+    r_aut = p_aut.add_run("Abirami K   ·   Madhumitha P S\n")
+    r_aut.bold = True
     r_aut.font.name = 'Times New Roman'
-    r_aut.font.size = Pt(9.5)
-    r_aut.font.color.rgb = RGBColor(0x33, 0x33, 0x33)
+    r_aut.font.size = Pt(10.5)
+    r_aut.font.color.rgb = RGBColor(0x00, 0x2B, 0x49)
+    
+    r_aff = p_aut.add_run("Department of Computer Science and Engineering\nabiramikondaiyan@gmail.com\nSeptember 2026")
+    r_aff.font.name = 'Times New Roman'
+    r_aff.font.size = Pt(9)
+    r_aff.font.color.rgb = RGBColor(0x44, 0x44, 0x44)
 
     p_rep = doc.add_paragraph()
     p_rep.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    p_rep.paragraph_format.space_before = Pt(1)
+    p_rep.paragraph_format.space_before = Pt(2)
     p_rep.paragraph_format.space_after = Pt(6)
-    r_rep = p_rep.add_run("Repository & Live Reproduction Suite: https://github.com/abirami-302/MultiHop-RAG-Diagnosis")
+    r_rep = p_rep.add_run("Code & Data Availability: Complete execution scripts, raw checkpoint outputs, and paired bootstrap logs are open-source at https://github.com/abirami-302/MultiHop-RAG-Diagnosis under the MIT License.")
     r_rep.font.name = 'Times New Roman'
     r_rep.font.size = Pt(8.5)
     r_rep.italic = True
@@ -571,21 +577,24 @@ def build_paper():
         "to bridge semantic vocabulary gaps."
     )
 
-    # 4.5 PAIRED BOOTSTRAP SIGNIFICANCE
+    # 4.5 PAIRED BOOTSTRAP SIGNIFICANCE (FULL-WIDTH SECTION FOR WIDE TABLES 5 & 6)
+    sec_wide = doc.add_section(WD_SECTION.CONTINUOUS)
+    sec_wide._sectPr.append(parse_xml(f'<w:cols {nsdecls("w")} w:num="1"/>'))
+
     add_sec_heading("4.5 Paired Bootstrap Resampling Significance Analysis (Table 5)", level=2)
     add_p(
         "To evaluate whether the observed point differences reflect genuine distributional separation, we executed paired bootstrap resampling (B=10,000 resamples) [15]. "
         "Table 5 presents the empirical percentile 95% confidence intervals and Holm-adjusted p-values across two families: Primary Retrieval Coverage (AllSF@5, m=8) "
         "and Downstream Token Overlap (F1, m=5)."
     )
-    add_caption("Table 5. Paired bootstrap hypothesis testing on S8 vs. alternative configurations (B=10,000, 95% CI, Holm-Bonferroni corrected).")
+    add_caption("Table 5. Paired bootstrap hypothesis testing on S8 vs. alternative configurations (B=10,000, 95% CI, Holm-Bonferroni family-wise error control).")
 
     t5_data = [
         ["Comparison Pair", "Metric", "S8", "Base", "Δ Mean", "95% Bootstrap CI", "Raw p", "Holm p", "Sig."],
         ["Family 1: Primary Retrieval Coverage (AllSF@5, m=8 tests; Raw p < 0.0001 represents bootstrap floor)", "", "", "", "", "", "", "", ""],
         ["S8 vs S2_Dense", "AllSF", "85.6%", "70.6%", "+15.0%", "[+11.2, +19.0]", "< 0.0001", "0.0008", "Yes"],
         ["S8 vs S3_Hybrid", "AllSF", "85.6%", "67.2%", "+18.4%", "[+14.6, +22.2]", "< 0.0001", "0.0008", "Yes"],
-        ["S8 vs S5_Hybrid_Rerank", "AllSF", "85.6%", "82.6%", "+3.0%", "[+1.4, +4.8]", "< 0.0001", "0.0008", "Yes"],
+        ["S8 vs S5_Hybrid_Rerank", "AllSF", "85.6%", "82.6%", "+3.0%", "[+1.4, +4.8]", "0.0004", "0.0028", "Yes"],
         ["S8 vs S7_Iterative_Dense", "AllSF", "85.6%", "72.8%", "+12.8%", "[+8.6, +17.0]", "< 0.0001", "0.0008", "Yes"],
         ["S8 vs Abl_No_Reranker", "AllSF", "85.6%", "63.0%", "+22.6%", "[+18.6, +26.8]", "< 0.0001", "0.0008", "Yes"],
         ["S8 vs Abl_BM25_Only", "AllSF", "85.6%", "80.4%", "+5.2%", "[+3.0, +7.4]", "< 0.0001", "0.0008", "Yes"],
@@ -605,13 +614,13 @@ def build_paper():
         for c_idx, cell in enumerate(row.cells):
             cell.text = t5_data[r_idx][c_idx]
         if r_idx == 0:
-            format_row(row, bg_hex="003366", bold=True, font_size=7, align=WD_ALIGN_PARAGRAPH.CENTER, color_hex="FFFFFF")
+            format_row(row, bg_hex="003366", bold=True, font_size=8, align=WD_ALIGN_PARAGRAPH.CENTER, color_hex="FFFFFF")
         elif r_idx in [1, 10]:
-            format_row(row, bg_hex="E6EDF5", bold=True, font_size=7, align=WD_ALIGN_PARAGRAPH.LEFT)
+            format_row(row, bg_hex="E6EDF5", bold=True, font_size=8, align=WD_ALIGN_PARAGRAPH.LEFT)
             a, b = row.cells[0], row.cells[8]
             a.merge(b)
         else:
-            format_row(row, bg_hex=None, bold=False, font_size=7, align=WD_ALIGN_PARAGRAPH.LEFT)
+            format_row(row, bg_hex=None, bold=False, font_size=8, align=WD_ALIGN_PARAGRAPH.LEFT)
             for c in [2, 3, 4, 5, 6, 7]: row.cells[c].paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.RIGHT
             row.cells[8].paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
     add_table_note("Note: Confidence intervals derived from empirical percentiles [2.5%, 97.5%]. Raw p < 0.0001 represents the bootstrap floor 1/(B+1).")
@@ -632,13 +641,13 @@ def build_paper():
     add_caption("Table 6. McNemar's paired test on Exact Match (m=6 comparisons, continuity-corrected χ², Holm step-down).")
 
     t6_data = [
-        ["Rank (i)", "Comparison Pair", "S8 Win", "Other Win", "χ²", "Raw p", "Mult.", "Holm p", "Sig."],
-        ["1", "S8 vs S3_Hybrid", "57", "26", "10.84", "0.00099", "× 6", "0.0059", "Yes"],
-        ["2", "S8 vs Abl_No_Reranker", "49", "29", "4.63", "0.0315", "× 5", "0.1575", "No"],
-        ["3", "S8 vs S2_Dense", "50", "35", "2.31", "0.1289", "× 4", "0.5156", "No"],
-        ["4", "S8 vs S7_Iterative_Dense", "49", "38", "1.15", "0.2837", "× 3", "0.8511", "No"],
-        ["5", "S8 vs S5_Hybrid_Rerank", "10", "5", "1.07", "0.3017", "× 2", "0.8511", "No"],
-        ["6", "S8 vs S5_Ctrl_Pool50", "14", "9", "0.70", "0.4042", "× 1", "0.8511", "No"]
+        ["Rank (i)", "Comparison Pair", "S8 Win", "Other Win", "χ²", "Raw p", "Multiplier", "Holm p", "Significance"],
+        ["1", "S8 vs S3_Hybrid", "57", "26", "10.84", "0.00099", "× 6", "0.0059", "Statistically Significant"],
+        ["2", "S8 vs Abl_No_Reranker", "49", "29", "4.63", "0.0315", "× 5", "0.1575", "Not Significant"],
+        ["3", "S8 vs S2_Dense", "50", "35", "2.31", "0.1289", "× 4", "0.5156", "Not Significant"],
+        ["4", "S8 vs S7_Iterative_Dense", "49", "38", "1.15", "0.2837", "× 3", "0.8511", "Not Significant"],
+        ["5", "S8 vs S5_Hybrid_Rerank", "10", "5", "1.07", "0.3017", "× 2", "0.8511", "Not Significant"],
+        ["6", "S8 vs S5_Ctrl_Pool50", "14", "9", "0.70", "0.4042", "× 1", "0.8511", "Not Significant"]
     ]
     t6 = doc.add_table(rows=len(t6_data), cols=9)
     t6.alignment = WD_TABLE_ALIGNMENT.CENTER
@@ -647,14 +656,14 @@ def build_paper():
         for c_idx, cell in enumerate(row.cells):
             cell.text = t6_data[r_idx][c_idx]
         if r_idx == 0:
-            format_row(row, bg_hex="003366", bold=True, font_size=7, align=WD_ALIGN_PARAGRAPH.CENTER, color_hex="FFFFFF")
+            format_row(row, bg_hex="003366", bold=True, font_size=8, align=WD_ALIGN_PARAGRAPH.CENTER, color_hex="FFFFFF")
         elif r_idx == 1:
-            format_row(row, bg_hex="F0F4F8", bold=True, font_size=7, align=WD_ALIGN_PARAGRAPH.LEFT)
+            format_row(row, bg_hex="F0F4F8", bold=True, font_size=8, align=WD_ALIGN_PARAGRAPH.LEFT)
             row.cells[0].paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
             for c in [2, 3, 4, 5, 6, 7]: row.cells[c].paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.RIGHT
             row.cells[8].paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
         else:
-            format_row(row, bg_hex=None, bold=False, font_size=7, align=WD_ALIGN_PARAGRAPH.LEFT)
+            format_row(row, bg_hex=None, bold=False, font_size=8, align=WD_ALIGN_PARAGRAPH.LEFT)
             row.cells[0].paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
             for c in [2, 3, 4, 5, 6, 7]: row.cells[c].paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.RIGHT
             row.cells[8].paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -666,6 +675,10 @@ def build_paper():
         "to p_holm = 0.1575. Against dense retrieval S2, S8 produces 50 wins and 35 losses, yielding p_holm = 0.5156. Finally, against fair single-pass "
         "control S5_Ctrl, S8 produces 14 wins against 9 losses (a net advantage of 5 questions out of 500), yielding chi2=0.70 and p_holm = 0.8511."
     )
+
+    # SWITCH BACK TO TWO COLUMNS FOR 4.7 ONWARDS
+    sec_twocol2 = doc.add_section(WD_SECTION.CONTINUOUS)
+    sec_twocol2._sectPr.append(parse_xml(f'<w:cols {nsdecls("w")} w:num="2" w:space="720"/>'))
 
     # 4.7 DEPTH CURVES
     add_sec_heading("4.7 Multi-Retriever Depth Curves across K ∈ {5, 10, 25, 50} (Table 7 & Figure 3)", level=2)
@@ -972,9 +985,19 @@ def build_paper():
         r_run.font.name = 'Times New Roman'
         r_run.font.size = Pt(8)
 
-    out_path = r"C:\Users\abira\OneDrive\Desktop\MultiHop-RAG-Diagnosis\RAG_Paper_TwoColumn.docx"
-    doc.save(out_path)
-    print(f"Two-column research paper successfully updated at: {out_path}")
+    out_path1 = r"C:\Users\abira\OneDrive\Desktop\MultiHop-RAG-Diagnosis\RAG_Paper_TwoColumn.docx"
+    doc.save(out_path1)
+    print(f"Two-column research paper successfully updated at: {out_path1}")
+
+    out_path2 = r"C:\Users\abira\OneDrive\Desktop\MultiHop-RAG-Diagnosis\TEAM 2 RESEARCH PAPER.docx"
+    try:
+        doc.save(out_path2)
+        print(f"TEAM 2 RESEARCH PAPER successfully updated at: {out_path2}")
+    except Exception as e:
+        print(f"Notice: Could not write directly to {out_path2}: {e}")
+        out_path2_alt = r"C:\Users\abira\OneDrive\Desktop\MultiHop-RAG-Diagnosis\TEAM_2_RESEARCH_PAPER_FINAL.docx"
+        doc.save(out_path2_alt)
+        print(f"Saved copy to: {out_path2_alt}")
 
 if __name__ == "__main__":
     build_paper()
