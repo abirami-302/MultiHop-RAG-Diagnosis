@@ -328,9 +328,10 @@ def build_paper():
         "where partial evidence suffices for answering, raising questions about whether iterative retrieval is always necessary."
     )
     add_p(
-        "Furthermore, empirical rigor and statistical testing remain inconsistently applied in recent NLP literature [21]. Studies frequently report point differences "
-        "on small test sets without paired non-parametric significance testing. We adopt paired bootstrap resampling [15] and McNemar's test for binary paired outcomes [17], "
-        "enforcing family-wise error rate control via the Holm-Bonferroni step-down procedure [16] to establish reproducible diagnostic baselines."
+        "At the same time, empirical rigor and statistical validation remain inconsistently applied across published RAG evaluations [21]. "
+        "Studies frequently report marginal point differences on small test sets without paired non-parametric significance testing. In this work, "
+        "we apply paired bootstrap resampling [15] and McNemar's test for binary paired outcomes [17], enforcing family-wise error rate control "
+        "via the Holm-Bonferroni step-down procedure [16] to establish reliable, reproducible diagnostic baselines."
     )
 
     # 3. METHODOLOGY
@@ -719,8 +720,8 @@ def build_paper():
     )
     add_p(
         "Bridge questions, by contrast, exhibit a severe lexical bottleneck. BM25 reaches only 44.06% AllSF@5 on Bridge questions because the second fact's "
-        "entity is unmentioned in the original prompt. Furthermore, Hybrid RRF underperforms Dense retrieval on Bridge questions at K=5 (61.14% vs 63.86%), "
-        "as lexical fusion introduces keyword-heavy distractors."
+        "entity is unmentioned in the original prompt. Hybrid RRF actually underperforms pure Dense retrieval on Bridge questions at K=5 (61.14% vs 63.86%), "
+        "because lexical fusion injects keyword-heavy distractors that displace relevant semantic matches."
     )
 
     # 4.8 EVIDENCE RECOVERY FUNNEL & 2x2
