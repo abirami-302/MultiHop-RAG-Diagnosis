@@ -1,0 +1,9 @@
+Comparison,Metric,Mean Diff (%),95% CI (%),Raw p-val,Holm p,Significant (alpha=0.05)
+S8 vs S2_Dense,EM,3.0,"[-0.40, 6.60]",0.107,0.6420,No
+S8 vs S3_Hybrid,EM,6.2,"[2.80, 9.80]",0.001,0.0080,Yes
+S8 vs S5_Hybrid_Rerank,EM,1.0,"[-0.40, 2.60]",0.238,1.0000,No
+S8 vs S5_Ctrl_Pool50,EM,1.0,"[-0.80, 2.80]",0.3328,1.0000,No
+S8 vs S7_Iterative_Dense,EM,2.1999999999999997,"[-1.40, 5.80]",0.2606,1.0000,No
+S8 vs Abl_No_Reranker,EM,4.0,"[0.60, 7.40]",0.0238,0.1666,No
+S8 vs Abl_Dense_Only,EM,-0.2,"[-2.40, 2.00]",0.9336,1.0000,No
+S8 vs Abl_BM25_Only,EM,-0.6,"[-2.80, 1.60]",0.6556,1.0000,No
